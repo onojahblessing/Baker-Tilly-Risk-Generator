@@ -1,0 +1,293 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI-Powered Audit Risk & Control Engine (Nigeria)</title>
+    <style>
+        :root {
+            --primary: #1e3a8a;
+            --secondary: #0f172a;
+            --success: #16a34a;
+            --dark: #334155;
+            --bg: #f8fafc;
+            --border: #cbd5e1;
+        }
+        body {
+            font-family: 'Segoe UI', system-ui, sans-serif;
+            background-color: var(--bg);
+            color: var(--dark);
+            margin: 0;
+            padding: 0;
+        }
+        header {
+            background-color: var(--primary);
+            color: white;
+            padding: 25px;
+            text-align: center;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+        .container {
+            max-width: 1300px;
+            margin: 30px auto;
+            padding: 0 20px;
+        }
+        .config-card {
+            background: white;
+            padding: 25px;
+            border-radius: 8px;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.05);
+            border: 1px solid #e2e8f0;
+            margin-bottom: 30px;
+        }
+        .grid-3 {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+            margin-bottom: 15px;
+        }
+        .form-group {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+        label { font-weight: 600; font-size: 14px; color: #475569; }
+        input, select {
+            padding: 12px;
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            font-size: 14px;
+        }
+        .actions {
+            margin-top: 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        button {
+            background-color: var(--primary);
+            color: white;
+            border: none;
+            padding: 12px 30px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: bold;
+            font-size: 15px;
+            transition: all 0.2s;
+        }
+        button:hover { background-color: var(--secondary); }
+        .loading-text {
+            display: none;
+            font-weight: bold;
+            color: var(--primary);
+            animation: blink 1.5s infinite;
+        }
+        @keyframes blink { 50% { opacity: 0.5; } }
+        .output-section {
+            display: none;
+        }
+        .paper-heading {
+            background: #e2e8f0;
+            padding: 10px 15px;
+            font-weight: bold;
+            margin-top: 25px;
+            border-left: 5px solid var(--primary);
+            color: var(--secondary);
+            font-size: 15px;
+            letter-spacing: 0.5px;
+        }
+        .wp-block {
+            background: white;
+            padding: 25px;
+            border: 1px solid #e2e8f0;
+            border-top: none;
+            margin-bottom: 15px;
+            font-size: 14px;
+            line-height: 1.7;
+            white-space: pre-wrap;
+        }
+        .export-bar {
+            background: #f1f5f9;
+            padding: 15px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-radius: 6px;
+            margin-bottom: 20px;
+        }
+    </style>
+</head>
+<body>
+
+<header>
+    <h1>AI CaseWare Working Papers Suite</h1>
+    <p>Live Generative Risk Identification (Form 520) & Control Implementation (Form 532) for Nigeria</p>
+</header>
+
+<div class="container">
+    <div class="config-card">
+        <h3>Client Profile Setup</h3>
+        
+        <div class="form-group" style="margin-bottom: 20px;">
+            <label style="color: var(--primary);">Gemini API Key (Your 'AQ...' key is saved securely in your browser's local cache)</label>
+            <input type="password" id="apiKey" placeholder="Paste your AQ... Gemini API key here">
+        </div>
+        
+        <div class="grid-3">
+            <div class="form-group">
+                <label>Company / Client Name</label>
+                <input type="text" id="clientName" placeholder="e.g., BUA Foods, Honeywell, Corporate Client">
+            </div>
+            <div class="form-group">
+                <label>Specific Operations / Industry Context in Nigeria</label>
+                <input type="text" id="industry" placeholder="e.g., Commercial farming in Kaduna, Retail banking in Lagos">
+            </div>
+            <div class="form-group">
+                <label>Financial Year End</label>
+                <input type="date" id="yearEnd">
+            </div>
+        </div>
+        <div class="actions">
+            <span id="loadingMsg" class="loading-text">🔄 Connecting to Gemini Engine... Extracting unique risk metrics...</span>
+            <button onclick="generateAuditSuite()">Run Deep Live AI Synthesis</button>
+        </div>
+    </div>
+
+    <div id="outputSection" class="output-section">
+        <div class="export-bar">
+            <div>
+                <strong>Active Workpapers for:</strong> <span id="lblClient"></span> | Year End: <span id="lblDate"></span>
+            </div>
+            <button onclick="window.print()" style="background-color: var(--success)">Print / Save to PDF Working Papers</button>
+        </div>
+
+        <div id="dynamicContent"></div>
+    </div>
+</div>
+
+<script>
+    // Load key from storage automatically on page visit
+    document.addEventListener("DOMContentLoaded", () => {
+        if(localStorage.getItem("firm_audit_ai_key")) {
+            document.getElementById("apiKey").value = localStorage.getItem("firm_audit_ai_key");
+        }
+    });
+
+    async function generateAuditSuite() {
+        const apiKey = document.getElementById('apiKey').value.trim();
+        const client = document.getElementById('clientName').value.trim();
+        const industry = document.getElementById('industry').value.trim();
+        const rawDate = document.getElementById('yearEnd').value;
+
+        if (!apiKey) return alert("Please enter your Gemini API Key.");
+        if (!client || !industry || !rawDate) return alert("Please fill out all client profile setup items.");
+
+        // Store key safely locally
+        localStorage.setItem("firm_audit_ai_key", apiKey);
+
+        const dateObj = new Date(rawDate);
+        const formattedDate = dateObj.toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' });
+
+        document.getElementById('lblClient').innerText = client;
+        document.getElementById('lblDate').innerText = formattedDate;
+        
+        document.getElementById('loadingMsg').style.display = 'inline';
+        document.getElementById('outputSection').style.display = 'none';
+
+        // Deep technical audit prompt
+        const auditPrompt = `You are an expert Audit Risk and Control Specialist with expert knowledge of CaseWare Form 520 (Risk Report) and Form 532 (Control Implementation).
+Generate customized, completely non-generic, high-impact business operational risks and corresponding controls tailored strictly to this entity:
+Client Name: ${client}
+Detailed Industry/Operations in Nigeria: ${industry}
+Financial Year End: ${formattedDate}
+
+Generate exactly 3 deep, highly specific operational/financial risks relevant to the Nigerian business environment. For EACH risk, output the response exactly in this structural format with NO markdown bold markers (**). Use plain structural text block fields:
+
+FORM 520 – RISK REPORT
+New Risk Name: [Concise title tailored specifically to ${client}]
+New Risk Description: [Detailed operational context explicitly explaining how physical or operational realities in Nigeria affect transactional flow and ledger metrics]
+Source / Reference: [e.g. Walkthrough, Prior Year Issue, Management Discussion]
+Financial Statement Level: [Business Risk or Fraud Risk]
+Financial Statement Areas: [Pick accurately from: Revenue, Inventory, Trade and Other Receivables, Cash and Cash Equivalents, Trade and Other Payables, Employee Costs, Property Plant and Equipment, Taxation, Investments, Borrowings, Cost of Sales, Operating Expenses, Prepayments, Contract Assets, Contract Liabilities]
+Assertions: [Pick specific applicable letters from: C, E, O, A, V, R, OC, P]
+Business Cycles Affected: [Pick from: Financial Reporting, Investments, Inventory, Payroll, Purchases, Payables, Payments, Revenue, Receivables, Receipts]
+Inherent Risk Factors: [Pick from: Change, Complexity, Subjectivity, Susceptibility to misstatement due to fraud risk factors, Susceptibility to misstatement due to management bias, Uncertainty]
+Likelihood to Occur: [Very Likely, Likely, or Highly Unlikely]
+Monetary Impact: [Very Material, Material, or Not Material]
+Inherent Risk: [Upper End, Higher, Lower, Negligible]
+Control Reliance: [Moderate or High]
+RMM: [Significant, Elevated, Moderate, or Low]
+Significant Risk: [Yes or No]
+Procedures Other Than Substantive: [Yes or No]
+Roll Forward: [Yes or No]
+Management Response: [Customized management justification statement]
+Risk Treatment / Mitigation: [How management controls it locally]
+Audit Response: [Specific, practical, actionable substantive audit testing instructions to test this specific risk]
+Audit has properly addressed this risk: Yes
+
+FORM 532 – CONTROL IMPLEMENTATION
+New Control Name: [Concise control title structurally linked to the risk above]
+Associated Risk: [Exactly copy the New Risk Name given above]
+New Control Description: [Explain exactly how the preventative or detective control works step-by-step within ${client}'s operations]
+Financial Statement Level: [Must match the risk above]
+Financial Statement Areas: [Must match the risk above]
+Assertions: [Must match the risk above]
+Business Cycles Affected: [Must match the risk above]
+Indirect Control: [Yes or No]
+Manual / Automatic: [Manual, Automatic, or Manual / Dependent on IT]
+Frequency of Control: [Annually, Quarterly, Monthly, Fortnightly, Weekly, Weekdays, Daily, or Per Transaction]
+Evaluation of Control Design: Satisfactory
+Implementation Verified: Satisfactory
+Roll Forward: No
+Test of Control: Yes
+Will the Control be relied upon? Yes
+========================================`;
+
+        try {
+            // Direct request connection payload to Google's live API layer
+            const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                    contents: [{ parts: [{ text: auditPrompt }] }]
+                })
+            });
+
+            const data = await response.json();
+            
+            if (data.error) {
+                alert("Gemini Engine Error: " + data.error.message);
+                return;
+            }
+
+            const generatedText = data.candidates[0].content.parts[0].text;
+            
+            // Separate the text logically based on individual risk loops
+            const blocks = generatedText.split('========================================');
+            let finalHtml = '';
+            
+            blocks.forEach(block => {
+                if(block.trim().length > 15) {
+                    // Extract separate CaseWare forms visually
+                    let content = block.trim()
+                        .replace('FORM 520 – RISK REPORT', '<div class="paper-heading">FORM 520 – RISK REPORT</div>')
+                        .replace('FORM 532 – CONTROL IMPLEMENTATION', '</div><div class="paper-heading">FORM 532 – CONTROL IMPLEMENTATION</div><div class="wp-block">');
+                    
+                    finalHtml += `<div class="wp-block">${content}</div></div>`;
+                }
+            });
+
+            document.getElementById('dynamicContent').innerHTML = finalHtml.replace('</div></div></div>', '</div></div>');
+            document.getElementById('outputSection').style.display = 'block';
+
+        } catch (error) {
+            console.error(error);
+            alert("Connection timed out. Please check your internet connectivity or key validity.");
+        } finally {
+            document.getElementById('loadingMsg').style.display = 'none';
+        }
+    }
+</script>
+
+</body>
+</html>
